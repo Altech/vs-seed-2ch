@@ -10,6 +10,8 @@ module VSSEED2ch
   THREAD_URI = thread['uri']
   THREAD_NUMBER = thread['number']
 
+  DATABASE = BASE_DIR + '/database'
+
   def configure(credential_path)
     credential = JSON.parse(File.read credential_path)
     Twitter.configure {|config|

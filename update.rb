@@ -8,7 +8,6 @@ require 'open-uri'
 require 'pstore'
 require __dir__ + '/lib.rb'
 
-db_path = __dir__ + '/database_path'
 debug = false
 
 # Collect
@@ -35,16 +34,18 @@ responses = str.lines.select{|l|
 VSSEED2ch.configure(File.dirname(__FILE__) + '/secret.json')
 
 # Tweet
-db = PStore.new(File.read db_path)
+db = PStore.new(VSSEED2ch::DATABASE)
 db.transaction do
   # Schema
   thread = db[VSSEED2ch::THREAD_NUMBER] ||= Hash.new
   thread[:tweets] ||= Array.new
   thread[:uri] ||= VSSEED2ch::THREAD_URI
+end
 
-  tweets = thread[:tweets]
-  
-  responses.each_with_index do |response, index|
+responses.each_with_index do |response, index|
+  db.transaction do
+    tweets = db[VSSEED2ch::THREAD_NUMBER][:tweets]
+    
     break if index > 1000
     next if response.nil?
     next if tweets[index]
@@ -69,5 +70,4 @@ db.transaction do
       binding.pry
     end
   end
-
 end
