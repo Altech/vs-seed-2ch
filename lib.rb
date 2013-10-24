@@ -33,12 +33,12 @@ module VSSEED2ch
   def to_tweet(str,index,id=nil)
     tw = if id
            <<TWEET
-@vs_seed_2ch #{str.size > 120 ? str[0..100] + '.. ' + THREAD_URI + '/' + index.to_s : str}
+@vs_seed_2ch #{str.size > 120 ? str[0..95] + '.. ' + THREAD_URI + '/' + index.to_s : str}
 ##{index}
 TWEET
          else
            <<TWEET
-#{str.size > 130 ? str[0..110] + '.. ' + THREAD_URI + '/' + index.to_s : str}
+#{str.size > 130 ? str[0..105] + '.. ' + THREAD_URI + '/' + index.to_s : str}
 ##{index}
 TWEET
          end
