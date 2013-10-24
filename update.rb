@@ -26,8 +26,8 @@ responses = str.lines.select{|l|
   l =~ /^<dt>(\d+).+<dd> (.+)$/m
   a[$1.to_i] = CGI.unescapeHTML($2.gsub("<br> ","\n") # 改行は保持
                                   .gsub("http://","ttp://") # リンクされないように切る
-                                  .gsub(/(<[^>]*>)|\t/s){" "}
-                                  .strip) # 残りのタグは削除
+                                  .gsub(/(<[^>]*>)|\t/s){" "} # 残りのタグは削除
+                                  .strip)
   a
 }
 
@@ -57,7 +57,7 @@ responses.each_with_index do |response, index|
         text = response[/^ *>>(\d+) *\n*(.*)/m,2]
         reference = tweets[respond_to]
         if reference
-          VSSEED2ch.update(tweets,text,index,reference[:id])
+          VSSEED2ch.update(tweets,text,index,respond_to,reference[:id])
         else
           VSSEED2ch.update(tweets,text,index)
         end

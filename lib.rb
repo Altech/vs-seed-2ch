@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 require 'twitter'
 require 'json'
 
@@ -21,28 +22,28 @@ module VSSEED2ch
     }
   end
 
-  def update(tweets,str,index,id=nil)
-    tw = if id
-           Twitter.update to_tweet(str,index,id), {"in_reply_to_status_id"=>id}
+  def update(tweets,str,index,response_index=nil,response_id=nil)
+    tw = if response_index
+           Twitter.update to_tweet(str,index,response_index), {"in_reply_to_status_id"=>response_id}
          else
            Twitter.update to_tweet(str,index)
          end
     tweets[index] = tw
   end
   
-  def to_tweet(str,index,id=nil)
-    tw = if id
+  def to_tweet(str,index,response_index=nil)
+    str = str.encode('utf-8')
+    tw = if response_index
            <<TWEET
-@vs_seed_2ch #{str.size > 120 ? str[0..95] + '.. ' + THREAD_URI + '/' + index.to_s : str}
-##{index}
+##{index} ≫ ##{response_index}
+#{str.size > 125 ? str[0..100] + '.. ' + THREAD_URI + '/' + index.to_s : str}
 TWEET
          else
            <<TWEET
-#{str.size > 130 ? str[0..105] + '.. ' + THREAD_URI + '/' + index.to_s : str}
 ##{index}
+#{str.size > 130 ? str[0..105] + '.. ' + THREAD_URI + '/' + index.to_s : str}
 TWEET
          end
-    tw.encode('utf-8')
   end
   
 end
