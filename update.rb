@@ -1,87 +1,73 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
+__dir__ ||= File.dirname(__FILE__) # for Ruby 1.x
+
 require 'pry'
 require 'open-uri'
-require 'twitter'
+require 'pstore'
+require __dir__ + '/lib.rb'
 
-THREAD_URI = 'http://toro.2ch.net/test/read.cgi/arc/1379376057'
+db_path = __dir__ + '/database_path'
+debug = false
 
-current_thread_number = 326
-
-str = File.read(open(THREAD_URI)).force_encoding("Windows-31J")
-
+# Collect
+str = File.read(open(VSSEED2ch::THREAD_URI)).force_encoding("Windows-31J")
 responses = str.lines.select{|l|
   case l
   when /^<dt>\d+/
     true
   when /^<dt>(\d+).+<dd>(.+)$/
-    `post "@Altech_2013 2chパーサーに例外が出現しました！修正待ちなう。"`
+    `post "@Altech_2013 2chパーサーに例外が出現しました！修正待ちなう。"` unless debug
     binding.pry
   else
     false
   end
 }.inject([]){|a,l|
-  l =~ /^<dt>(\d+).+<dd> (.+)$/
-  a[$1.to_i] = CGI.unescapeHTML($2.gsub("<br> ","\n").gsub("http://","ttp://").gsub(/(<[^>]*>)|\t/s){" "})
+  l =~ /^<dt>(\d+).+<dd> (.+)$/m
+  a[$1.to_i] = CGI.unescapeHTML($2.gsub("<br> ","\n") # 改行は保持
+                                  .gsub("http://","ttp://") # リンクされないように切る
+                                  .gsub(/(<[^>]*>)|\t/s){" "}) # 残りのタグは削除
   a
 }
 
-TwitterConfig = JSON.parse(File.read(__dir__ + '/secret.json'))
+# OAuth
+VSSEED2ch.configure(File.dirname(__FILE__) + '/secret.json')
 
-# Set OAuth
-Twitter.configure {|config|
-  %w[consumer_key consumer_secret oauth_token oauth_token_secret].each do |member|
-    config.send "#{member}=", TwitterConfig[member.to_sym]
-  end
-}
-
-def to_tweet(str,index,id=nil)
-  
-  ret = if id
-    <<TWEET
-@vs_seed_2ch #{str.size > 120 ? str[0..100] + '...' + THREAD_URI + '/' + index.to_s : str}
-##{index}
-TWEET
-        else
-    <<TWEET
-#{str.size > 130 ? str[0..110] + '...' + THREAD_URI + '/' + index.to_s : str}
-##{index}
-TWEET
-        end
-  binding.pry if ret.size > 140
-  ret.encode 'utf-8'
-end
-
-require 'pstore'
-
-db = PStore.new('/Users/Altech/db')
+# Tweet
+db = PStore.new(File.read db_path)
 db.transaction do
-  thread = db[current_thread_number] ||= Hash.new
-  tweets = db[current_thread_number][:tweets] ||= Array.new
+  # Schema
+  thread = db[VSSEED2ch::THREAD_NUMBER] ||= Hash.new
+  thread[:tweets] ||= Array.new
+  thread[:uri] ||= VSSEED2ch::THREAD_URI
 
-  thread[:uri] ||= THREAD_URI
+  tweets = thread[:tweets]
   
   responses.each_with_index do |response, index|
+    break if index > 1000
     next if response.nil?
     next if tweets[index]
-    
-    case response
-    when /^ >>(\d+) *\n*(.*)/m
-      respond_to, text = $1.to_i, $2
-      reference = tweets[respond_to]
-      if reference
-        tw = Twitter.update to_tweet(text,index,reference[:id]), {"in_reply_to_status_id"=>reference[:id]}
-        tweets[index] = tw
+    begin
+      case response.lines.first
+      when /^ *>>(\d+)/m
+        respond_to = $1.to_i
+        text = response[/^ *>>(\d+) *\n*(.*)/m,2]
+        reference = tweets[respond_to]
+        if reference
+          VSSEED2ch.update(tweets,text,index,reference[:id])
+        else
+          VSSEED2ch.update(tweets,text,index)
+        end
       else
-        tw = Twitter.update to_tweet(text,index)
-        tweets[index] = tw
+        VSSEED2ch.update(tweets,response,index)
       end
-    else
-      tw = Twitter.update to_tweet(response, index)
-      tweets[index] = tw
+
+      `post @Altech_2013 "スレが1000超えたよ!"` if index == 1000
+    rescue => e
+      `post "@Altech_2013 2ch投稿中に例外が出現しました！修正待ちなう。"` unless debug
+      binding.pry
     end
-    break if index > 1000
   end
 
 end
