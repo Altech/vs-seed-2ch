@@ -26,7 +26,8 @@ responses = str.lines.select{|l|
   l =~ /^<dt>(\d+).+<dd> (.+)$/m
   a[$1.to_i] = CGI.unescapeHTML($2.gsub("<br> ","\n") # 改行は保持
                                   .gsub("http://","ttp://") # リンクされないように切る
-                                  .gsub(/(<[^>]*>)|\t/s){" "}) # 残りのタグは削除
+                                  .gsub(/(<[^>]*>)|\t/s){" "}
+                                  .strip) # 残りのタグは削除
   a
 }
 
