@@ -45,13 +45,21 @@ db.transaction do
   thread[:uri] ||= VSSEED2ch::THREAD_URI
 end
 
+# for parformance
+skip = db.transaction do
+  tweets = db[VSSEED2ch::THREAD_NUMBER][:tweets]
+  index = tweets.drop(1).find_index{|tweet| tweet.nil?}
+  index ? index+1 : tweets.size
+end
+
 responses.each_with_index do |response, index|
+  break if index > 1000
+  next if response.nil?
+  next if index < skip
   db.transaction do
     tweets = db[VSSEED2ch::THREAD_NUMBER][:tweets]
-    
-    break if index > 1000
-    next if response.nil?
     next if tweets[index]
+    
     begin
       case response.lines.first
       when /^ *>>(\d+)/m
