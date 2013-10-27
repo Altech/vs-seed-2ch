@@ -1,2 +1,4 @@
 secret.json
 database
+schedule.rb
+*.log

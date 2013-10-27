@@ -10,6 +10,8 @@ require __dir__ + '/lib.rb'
 
 debug = false
 
+puts "===#{Time.now}==="
+
 # Collect
 str = File.read(open(VSSEED2ch::THREAD_URI)).force_encoding("Windows-31J")
 responses = str.lines.select{|l|
