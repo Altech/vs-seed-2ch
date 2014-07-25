@@ -13,7 +13,12 @@ debug = false
 puts "===#{Time.now}==="
 
 # Collect
-str = File.read(open(VSSEED2ch::THREAD_URI)).force_encoding("Windows-31J")
+res = Net::HTTP.get_response(URI(VSSEED2ch::THREAD_URI))
+if not res.is_a?(Net::HTTPSuccess)
+  abort 'Cannot get HTTPSuccess'
+end
+str = res.body.force_encoding("Windows-31J")
+
 responses = str.lines.select{|l|
   case l
   when /^<dt>\d+/
@@ -59,7 +64,7 @@ responses.each_with_index do |response, index|
   db.transaction do
     tweets = db[VSSEED2ch::THREAD_NUMBER][:tweets]
     next if tweets[index]
-    
+
     begin
       case response.lines.first
       when /^ *>>(\d+)/m
