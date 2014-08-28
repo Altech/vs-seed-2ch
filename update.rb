@@ -4,9 +4,9 @@
 __dir__ ||= File.dirname(__FILE__) # for Ruby 1.x
 
 require 'pry'
-require 'open-uri'
 require 'pstore'
 require __dir__ + '/lib.rb'
+require 'net/http'
 
 debug = false
 
