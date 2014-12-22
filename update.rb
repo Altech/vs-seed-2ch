@@ -24,7 +24,7 @@ responses = str.lines.select{|l|
   when /^<dt>\d+/
     true
   when /^<dt>(\d+).+<dd>(.+)$/
-    `post "@Altech_2013 2chパーサーに例外が出現しました！修正待ちなう。"` unless debug
+    `post "@Altech_2014 2chパーサーに例外が出現しました！修正待ちなう。"` unless debug
     binding.pry
   else
     false
