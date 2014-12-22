@@ -21,6 +21,15 @@ class VSSEED2ch
     end
   end
 
+  # spam?(tweet)==true iff tweet is replied to a spam tweet
+  def self.spam?(text,respond_to,tweets)
+    reply_tweet = tweets[respond_to]
+    return true if reply_tweet.nil?
+    res = Net::HTTP.get_response(URI("https://twitter.com/vs_seed_2ch/status/#{reply_tweet.id}"))
+    return true if res.is_a? Net::HTTPNotFound
+    return false
+  end
+
   def self.update(tweets,str,index,response_index=nil,response_id=nil)
     tw = if response_index
            @@client.update to_tweet(str,index,response_index), {"in_reply_to_status_id"=>response_id}

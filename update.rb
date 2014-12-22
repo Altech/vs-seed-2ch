@@ -70,9 +70,9 @@ responses.each_with_index do |response, index|
       when /^ *>>(\d+)/m
         respond_to = $1.to_i
         text = response[/^ *>>(\d+) *\n*(.*)/m,2]
-        reference = tweets[respond_to]
-        if reference
-          VSSEED2ch.update(tweets,text,index,respond_to,reference[:id])
+        next if VSSEED2ch.spam?(text,respond_to,tweets)
+        if reply_tweet = tweets[respond_to]
+          VSSEED2ch.update(tweets,text,index,respond_to,reply_tweet.id)
         else
           VSSEED2ch.update(tweets,text,index)
         end
